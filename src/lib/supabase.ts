@@ -15,7 +15,7 @@ export const hashPassword = (password: string): string => {
   return crypto.SHA256(password).toString();
 };
 
-export const APP_USER_ID = 'a26d9bb5-c2fe-431a-8bef-a4d964be76f8';
+export const APP_USER_ID = '3ad18039-cf5a-45e5-badc-2cf93b4af171';
 
 export function getCurrentUserId(): string {
   return APP_USER_ID;
