@@ -61,7 +61,7 @@ export default function SIIStatusChecker() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-bold text-white">Verificar Estado DTE en SII</h3>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Verificar Estado DTE en SII</h3>
         <button
           onClick={() => setShowChecker(!showChecker)}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
@@ -72,9 +72,9 @@ export default function SIIStatusChecker() {
       </div>
 
       {showChecker && (
-        <form onSubmit={handleCheckStatus} className="bg-slate-800 p-4 rounded-lg border border-slate-700 space-y-3">
+        <form onSubmit={handleCheckStatus} className="bg-white dark:bg-neutral-800 p-4 rounded-lg border border-neutral-200 dark:border-neutral-700 space-y-3">
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-500/20 border border-red-500 rounded text-red-300 text-sm">
+            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-500/20 border border-red-200 dark:border-red-500 rounded text-red-700 dark:text-red-300 text-sm">
               <AlertCircle className="w-4 h-4" />
               {error}
             </div>
@@ -86,7 +86,7 @@ export default function SIIStatusChecker() {
               placeholder="Folio DTE"
               value={formData.folioDte}
               onChange={(e) => setFormData({ ...formData, folioDte: e.target.value })}
-              className="bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm"
+              className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded px-3 py-2 text-gray-900 dark:text-white text-sm"
               required
             />
 
@@ -94,7 +94,7 @@ export default function SIIStatusChecker() {
               type="date"
               value={formData.fechaEmisionDte}
               onChange={(e) => setFormData({ ...formData, fechaEmisionDte: e.target.value })}
-              className="bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm"
+              className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded px-3 py-2 text-gray-900 dark:text-white text-sm"
               required
             />
 
@@ -103,7 +103,7 @@ export default function SIIStatusChecker() {
               placeholder="RUT Receptor (ej: 12.345.678-9)"
               value={formData.rutReceptor}
               onChange={(e) => setFormData({ ...formData, rutReceptor: e.target.value })}
-              className="bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm"
+              className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded px-3 py-2 text-gray-900 dark:text-white text-sm"
               required
             />
 
@@ -112,7 +112,7 @@ export default function SIIStatusChecker() {
               placeholder="Monto Total"
               value={formData.montoDte}
               onChange={(e) => setFormData({ ...formData, montoDte: e.target.value })}
-              className="bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm"
+              className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded px-3 py-2 text-gray-900 dark:text-white text-sm"
               required
             />
           </div>
@@ -129,40 +129,40 @@ export default function SIIStatusChecker() {
       )}
 
       {result && (
-        <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 space-y-3">
+        <div className="bg-white dark:bg-neutral-800 p-4 rounded-lg border border-neutral-200 dark:border-neutral-700 space-y-3">
           <div className="flex items-center gap-2 mb-3">
             {result.errCode === '0' ? (
               <CheckCircle className="w-5 h-5 text-green-500" />
             ) : (
               <AlertCircle className="w-5 h-5 text-yellow-500" />
             )}
-            <h4 className="text-white font-bold">Resultado de Consulta</h4>
+            <h4 className="text-gray-900 dark:text-white font-bold">Resultado de Consulta</h4>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <div>
-              <p className="text-slate-400">Estado</p>
-              <p className="text-white font-bold">{result.estado}</p>
+              <p className="text-gray-500 dark:text-gray-400">Estado</p>
+              <p className="text-gray-900 dark:text-white font-bold">{result.estado}</p>
             </div>
             <div>
-              <p className="text-slate-400">Código Error</p>
-              <p className="text-white font-bold">{result.errCode}</p>
+              <p className="text-gray-500 dark:text-gray-400">Código Error</p>
+              <p className="text-gray-900 dark:text-white font-bold">{result.errCode}</p>
             </div>
             <div>
-              <p className="text-slate-400">Descripción</p>
-              <p className="text-white">
+              <p className="text-gray-500 dark:text-gray-400">Descripción</p>
+              <p className="text-gray-900 dark:text-white">
                 {DTEStatusDescriptions[result.mappedStatus] || result.glosa}
               </p>
             </div>
             <div>
-              <p className="text-slate-400">Número de Atención</p>
-              <p className="text-white font-mono text-xs">{result.numAtencion}</p>
+              <p className="text-gray-500 dark:text-gray-400">Número de Atención</p>
+              <p className="text-gray-900 dark:text-white font-mono text-xs">{result.numAtencion}</p>
             </div>
           </div>
 
           {result.glosErr && (
-            <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded">
-              <p className="text-yellow-300 text-sm">{result.glosErr}</p>
+            <div className="p-3 bg-amber-50 dark:bg-yellow-500/10 border border-amber-200 dark:border-yellow-500/30 rounded">
+              <p className="text-amber-700 dark:text-yellow-300 text-sm">{result.glosErr}</p>
             </div>
           )}
         </div>

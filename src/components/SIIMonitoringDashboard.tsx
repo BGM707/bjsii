@@ -184,15 +184,15 @@ export default function SIIMonitoringDashboard() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DOK':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-100 dark:bg-green-500/20 text-emerald-800 dark:text-green-300';
       case 'FAU':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-100 dark:bg-yellow-500/20 text-amber-800 dark:text-yellow-300';
       case 'DNK':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300';
       case 'FAN':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 dark:bg-red-500/20 text-red-800 dark:text-red-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 dark:bg-gray-500/20 text-gray-800 dark:text-gray-300';
     }
   };
 
@@ -211,16 +211,16 @@ export default function SIIMonitoringDashboard() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-blue-600" />
-          <p className="text-gray-600">Cargando datos del SII...</p>
+          <p className="text-gray-600 dark:text-gray-400">Cargando datos del SII...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-6 bg-gray-50">
+    <div className="space-y-6 p-6 bg-gray-50 dark:bg-neutral-900">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Monitor SII en Tiempo Real</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Monitor SII en Tiempo Real</h2>
         <button
           onClick={triggerManualSync}
           disabled={syncing}
@@ -232,50 +232,50 @@ export default function SIIMonitoringDashboard() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+        <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500 rounded-lg p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="font-semibold text-red-900">Error</p>
-            <p className="text-red-700 text-sm">{error}</p>
+            <p className="font-semibold text-red-900 dark:text-red-200">Error</p>
+            <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
           </div>
         </div>
       )}
 
       {lastSync && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+        <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500 rounded-lg p-3 text-sm text-blue-700 dark:text-blue-300">
           Última actualización: {lastSync}
         </div>
       )}
 
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white dark:bg-neutral-800 rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm">Documentos Emitidos</p>
-                <p className="text-2xl font-bold text-gray-900">{summary.total_emitted_documents}</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Documentos Emitidos</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{summary.total_emitted_documents}</p>
               </div>
               <TrendingUp className="w-8 h-8 text-blue-600" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600 text-sm">Monto Neto</p>
-            <p className="text-2xl font-bold text-gray-900">
+          <div className="bg-white dark:bg-neutral-800 rounded-lg shadow p-6">
+            <p className="text-gray-600 dark:text-gray-400 text-sm">Monto Neto</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
               ${summary.total_emitted_net.toLocaleString('es-CL')}
             </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600 text-sm">IVA Total</p>
-            <p className="text-2xl font-bold text-gray-900">
+          <div className="bg-white dark:bg-neutral-800 rounded-lg shadow p-6">
+            <p className="text-gray-600 dark:text-gray-400 text-sm">IVA Total</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
               ${summary.total_emitted_iva.toLocaleString('es-CL')}
             </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600 text-sm">Monto Bruto</p>
-            <p className="text-2xl font-bold text-gray-900">
+          <div className="bg-white dark:bg-neutral-800 rounded-lg shadow p-6">
+            <p className="text-gray-600 dark:text-gray-400 text-sm">Monto Bruto</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
               ${summary.total_emitted_gross.toLocaleString('es-CL')}
             </p>
           </div>
@@ -283,43 +283,43 @@ export default function SIIMonitoringDashboard() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 bg-gray-50 border-b">
-            <h3 className="font-semibold text-gray-900">Últimas Facturas / Boletas</h3>
+        <div className="lg:col-span-2 bg-white dark:bg-neutral-800 rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 bg-gray-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Últimas Facturas / Boletas</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-gray-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Folio</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Fecha</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Monto Neto</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">IVA</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Total</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Estado SII</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Folio</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Fecha</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Monto Neto</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">IVA</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Total</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Estado SII</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-600">
                 {dtes.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                       No hay facturas sincronizadas
                     </td>
                   </tr>
                 ) : (
                   dtes.map((dte) => (
-                    <tr key={dte.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{dte.folio}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                    <tr key={dte.id} className="hover:bg-gray-50 dark:hover:bg-neutral-700 transition">
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{dte.folio}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
                         {new Date(dte.issue_date).toLocaleDateString('es-CL')}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                         ${dte.net_amount.toLocaleString('es-CL')}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                         ${dte.iva_amount.toLocaleString('es-CL')}
                       </td>
-                      <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">
                         ${dte.total_amount.toLocaleString('es-CL')}
                       </td>
                       <td className="px-6 py-4 text-sm">
@@ -335,38 +335,38 @@ export default function SIIMonitoringDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 bg-gray-50 border-b">
-            <h3 className="font-semibold text-gray-900">Historial de Sincronización</h3>
+        <div className="bg-white dark:bg-neutral-800 rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 bg-gray-50 dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Historial de Sincronización</h3>
           </div>
-          <div className="divide-y">
+          <div className="divide-y divide-neutral-200 dark:divide-neutral-600">
             {syncLogs.length === 0 ? (
-              <div className="px-6 py-8 text-center text-gray-500 text-sm">
+              <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
                 Sin registro de sincronizaciones
               </div>
             ) : (
               syncLogs.map((log) => (
-                <div key={log.id} className="px-6 py-4 hover:bg-gray-50">
+                <div key={log.id} className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-neutral-700 transition">
                   <div className="flex items-start gap-3">
                     {log.status === 'success' ? (
-                      <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                      <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                     ) : (
-                      <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                      <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {log.operation === 'scheduled_sync' ? 'Sincronización' : log.operation}
                       </p>
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
                         {new Date(log.created_at).toLocaleTimeString('es-CL')}
                       </p>
                       {log.records_processed > 0 && (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-500">
                           {log.records_processed} registros procesados
                         </p>
                       )}
                       {log.error_message && (
-                        <p className="text-xs text-red-600 mt-1">{log.error_message}</p>
+                        <p className="text-xs text-red-600 dark:text-red-400 mt-1">{log.error_message}</p>
                       )}
                     </div>
                   </div>

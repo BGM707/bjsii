@@ -528,12 +528,12 @@ export default function DatabaseImportExport() {
       <h2 className="text-2xl font-bold text-system">Importar / Exportar Base de Datos</h2>
 
       {/* Export Section */}
-      <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
+      <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg border border-neutral-200 dark:border-neutral-700">
         <div className="flex items-center gap-3 mb-4">
           <Download className="w-5 h-5 text-blue-400" />
-          <h3 className="text-lg font-semibold text-white">Exportar Datos</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Exportar Datos</h3>
         </div>
-        <p className="text-slate-400 text-sm mb-4">
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
           Descarga todos los datos del sistema en el formato que prefieras. El archivo incluye proyectos, notas de cobro, boletas, órdenes de servicio, DTEs y avisos de pago.
         </p>
         <div className="flex flex-wrap gap-3">
@@ -557,35 +557,35 @@ export default function DatabaseImportExport() {
       </div>
 
       {/* Import Section */}
-      <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
+      <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg border border-neutral-200 dark:border-neutral-700">
         <div className="flex items-center gap-3 mb-4">
           <Upload className="w-5 h-5 text-green-400" />
-          <h3 className="text-lg font-semibold text-white">Importar Datos</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Importar Datos</h3>
         </div>
-        <p className="text-slate-400 text-sm mb-4">
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
           Importa datos desde un archivo JSON, CSV o SQLite (.db, .sqlite). El sistema mapea automáticamente los campos que coincidan (cliente, montos, fechas, etc.) y omite los que no existen. Los registros duplicados se saltan automáticamente.
         </p>
 
-        <div className="p-4 bg-slate-900 rounded-lg border border-slate-600 mb-4">
-          <p className="text-slate-300 text-sm font-bold mb-2">Formatos aceptados:</p>
-          <ul className="text-slate-400 text-sm space-y-1">
+        <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-700 mb-4">
+          <p className="text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Formatos aceptados:</p>
+          <ul className="text-gray-600 dark:text-gray-400 text-sm space-y-1">
             <li className="flex items-center gap-2"><FileJson className="w-4 h-4 text-blue-400" /> JSON - Estructura con claves por tabla</li>
             <li className="flex items-center gap-2"><Database className="w-4 h-4 text-green-400" /> CSV - Formato exportado por esta app</li>
             <li className="flex items-center gap-2"><FileArchive className="w-4 h-4 text-yellow-400" /> SQLite (.db, .sqlite, .sqlite3) - Base de datos completa</li>
           </ul>
         </div>
 
-        <div className="p-4 bg-slate-900 rounded-lg border border-slate-600 mb-4">
-          <p className="text-slate-300 text-sm font-bold mb-2">Mapeo flexible de campos:</p>
-          <p className="text-slate-400 text-xs">
-            El sistema reconoce campos en español e inglés. Por ejemplo: <code className="text-blue-300">cliente</code> o <code className="text-blue-300">client</code>, <code className="text-blue-300">monto</code> o <code className="text-blue-300">amount</code>, <code className="text-blue-300">telefono</code> o <code className="text-blue-300">phone</code>. Los campos que no existan se rellenan con valores por defecto.
+        <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-700 mb-4">
+          <p className="text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Mapeo flexible de campos:</p>
+          <p className="text-gray-600 dark:text-gray-400 text-xs">
+            El sistema reconoce campos en español e inglés. Por ejemplo: <code className="text-blue-700 dark:text-blue-300">cliente</code> o <code className="text-blue-700 dark:text-blue-300">client</code>, <code className="text-blue-700 dark:text-blue-300">monto</code> o <code className="text-blue-700 dark:text-blue-300">amount</code>, <code className="text-blue-700 dark:text-blue-300">telefono</code> o <code className="text-blue-700 dark:text-blue-300">phone</code>. Los campos que no existan se rellenan con valores por defecto.
           </p>
         </div>
 
         <label className={`flex items-center justify-center gap-2 px-6 py-3 border-2 border-dashed rounded-lg cursor-pointer transition ${
           importLoading
-            ? 'border-slate-600 bg-slate-800 opacity-50 cursor-not-allowed'
-            : 'border-blue-500 bg-blue-500/10 hover:bg-blue-500/20'
+            ? 'border-neutral-300 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-900 opacity-50 cursor-not-allowed'
+            : 'border-blue-300 dark:border-blue-500 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20'
         }`}>
           <input
             type="file"
@@ -597,12 +597,12 @@ export default function DatabaseImportExport() {
           {importLoading ? (
             <>
               <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
-              <span className="text-blue-300 font-medium">Importando...</span>
+              <span className="text-blue-700 dark:text-blue-300 font-medium">Importando...</span>
             </>
           ) : (
             <>
               <Upload className="w-5 h-5 text-blue-400" />
-              <span className="text-blue-300 font-medium">Seleccionar archivo para importar</span>
+              <span className="text-blue-700 dark:text-blue-300 font-medium">Seleccionar archivo para importar</span>
             </>
           )}
         </label>
@@ -612,8 +612,8 @@ export default function DatabaseImportExport() {
       {message && (
         <div className={`p-4 rounded-lg flex items-center gap-3 ${
           message.type === 'success'
-            ? 'bg-green-500/20 border border-green-500 text-green-300'
-            : 'bg-red-500/20 border border-red-500 text-red-300'
+            ? 'bg-emerald-50 dark:bg-green-500/20 border border-emerald-200 dark:border-green-500 text-emerald-700 dark:text-green-300'
+            : 'bg-red-50 dark:bg-red-500/20 border border-red-200 dark:border-red-500 text-red-700 dark:text-red-300'
         }`}>
           {message.type === 'success' ? <CheckCircle className="w-5 h-5 flex-shrink-0" /> : <AlertCircle className="w-5 h-5 flex-shrink-0" />}
           <span className="text-sm">{message.text}</span>
@@ -622,25 +622,25 @@ export default function DatabaseImportExport() {
 
       {/* Import Results */}
       {importResults.length > 0 && (
-        <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-          <h3 className="text-lg font-semibold text-white mb-4">Resultado de la Importación</h3>
+        <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg border border-neutral-200 dark:border-neutral-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Resultado de la Importación</h3>
           <div className="space-y-3">
             {importResults.map((result, i) => (
-              <div key={i} className="bg-slate-900 p-4 rounded-lg border border-slate-600">
+              <div key={i} className="bg-neutral-50 dark:bg-neutral-900 p-4 rounded-lg border border-neutral-200 dark:border-neutral-700">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-white font-medium">{result.table}</span>
+                  <span className="text-gray-900 dark:text-white font-medium">{result.table}</span>
                   <div className="flex gap-4 text-sm">
-                    <span className="text-green-400">{result.imported} importados</span>
-                    <span className="text-yellow-400">{result.skipped} omitidos</span>
+                    <span className="text-green-600 dark:text-green-400">{result.imported} importados</span>
+                    <span className="text-yellow-600 dark:text-yellow-400">{result.skipped} omitidos</span>
                   </div>
                 </div>
                 {result.errors.length > 0 && (
                   <div className="mt-2 space-y-1">
                     {result.errors.slice(0, 3).map((err, j) => (
-                      <p key={j} className="text-red-400 text-xs">{err}</p>
+                      <p key={j} className="text-red-600 dark:text-red-400 text-xs">{err}</p>
                     ))}
                     {result.errors.length > 3 && (
-                      <p className="text-red-400 text-xs">...y {result.errors.length - 3} errores más</p>
+                      <p className="text-red-600 dark:text-red-400 text-xs">...y {result.errors.length - 3} errores más</p>
                     )}
                   </div>
                 )}
@@ -652,4 +652,3 @@ export default function DatabaseImportExport() {
     </div>
   );
 }
-

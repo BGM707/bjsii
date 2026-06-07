@@ -232,11 +232,11 @@ export default function PaymentNoticeGenerator() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+      <div className="bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-xl font-bold text-white mb-1">Avisos de Cobro</h2>
-            <p className="text-slate-400 text-sm">Gestiona avisos de cobro que pueden convertirse en facturas</p>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Avisos de Cobro</h2>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">Gestiona avisos de cobro que pueden convertirse en facturas</p>
           </div>
           <button
             onClick={handleNew}
@@ -248,92 +248,92 @@ export default function PaymentNoticeGenerator() {
         </div>
 
         {showForm && (
-          <div className="bg-slate-700 rounded-lg border border-slate-600 p-6 mb-6">
+          <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-slate-300 text-sm font-bold mb-2">Nombre Cliente *</label>
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Nombre Cliente *</label>
                 <input
                   type="text"
                   name="cliente"
                   value={formData.cliente}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Nombre del cliente"
                 />
               </div>
               <div>
-                <label className="block text-slate-300 text-sm font-bold mb-2">RUT Cliente *</label>
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">RUT Cliente *</label>
                 <input
                   type="text"
                   name="rut"
                   value={formData.rut}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="XX.XXX.XXX-X"
                 />
               </div>
               <div>
-                <label className="block text-slate-300 text-sm font-bold mb-2">Teléfono</label>
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Teléfono</label>
                 <input
                   type="tel"
                   name="telefono"
                   value={formData.telefono}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="+56XXXXXXXXX"
                 />
               </div>
               <div>
-                <label className="block text-slate-300 text-sm font-bold mb-2">Título Servicio</label>
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Título Servicio</label>
                 <input
                   type="text"
                   name="servicio_titulo"
                   value={formData.servicio_titulo}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Ej: Soporte Web"
                 />
               </div>
               <div>
-                <label className="block text-slate-300 text-sm font-bold mb-2">Período *</label>
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Período *</label>
                 <input
                   type="month"
                   name="periodo"
                   value={formData.periodo}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-slate-300 text-sm font-bold mb-2">Monto Neto (CLP) *</label>
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Monto Neto (CLP) *</label>
                 <input
                   type="number"
                   name="neto"
                   value={formData.neto}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="27269"
                 />
               </div>
               <div>
-                <label className="block text-slate-300 text-sm font-bold mb-2">Estado</label>
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Estado</label>
                 <select
                   name="estado"
                   value={formData.estado}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white"
                 >
                   <option value="pendiente">Pendiente</option>
                   <option value="pagado">Pagado</option>
                 </select>
               </div>
               <div>
-                <label className="block text-slate-300 text-sm font-bold mb-2">Proyecto Asociado</label>
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Proyecto Asociado</label>
                 <select
                   name="project_id"
                   value={formData.project_id || ''}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white"
                 >
                   <option value="">Sin proyecto</option>
                   {projects.map((p) => (
@@ -345,42 +345,42 @@ export default function PaymentNoticeGenerator() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-slate-300 text-sm font-bold mb-2">Banco</label>
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Banco</label>
                 <input
                   type="text"
                   name="banco"
                   value={formData.banco}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
               <div>
-                <label className="block text-slate-300 text-sm font-bold mb-2">Número Cuenta</label>
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Número Cuenta</label>
                 <input
                   type="text"
                   name="cuenta"
                   value={formData.cuenta}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
               <div>
-                <label className="block text-slate-300 text-sm font-bold mb-2">Titular Cuenta</label>
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Titular Cuenta</label>
                 <input
                   type="text"
                   name="titular"
                   value={formData.titular}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
               <div>
-                <label className="block text-slate-300 text-sm font-bold mb-2">Nota de Cobro Asociada</label>
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Nota de Cobro Asociada</label>
                 <select
                   name="cobro_id"
                   value={formData.cobro_id || ''}
                   onChange={handleInputChange}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white"
+                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white"
                 >
                   <option value="">Sin nota de cobro</option>
                   {cobrosNotes.map((c) => (
@@ -391,13 +391,13 @@ export default function PaymentNoticeGenerator() {
             </div>
 
             <div>
-              <label className="block text-slate-300 text-sm font-bold mb-2">Descripción Servicio</label>
+              <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Descripción Servicio</label>
               <textarea
                 name="servicio_desc"
                 value={formData.servicio_desc}
                 onChange={handleInputChange}
                 rows={3}
-                className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm"
+                className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white text-sm placeholder-gray-500 dark:placeholder-gray-400"
                 placeholder="Detalle del servicio prestado"
               />
             </div>
@@ -412,7 +412,7 @@ export default function PaymentNoticeGenerator() {
               </button>
               <button
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 bg-slate-600 text-white rounded font-bold hover:bg-slate-700 transition"
+                className="px-4 py-2 bg-neutral-400 dark:bg-neutral-600 text-white rounded font-bold hover:bg-neutral-500 dark:hover:bg-neutral-700 transition"
               >
                 Cancelar
               </button>
@@ -422,8 +422,8 @@ export default function PaymentNoticeGenerator() {
 
         {notices.length === 0 ? (
           <div className="text-center py-12">
-            <AlertCircle className="w-12 h-12 text-slate-500 mx-auto mb-3" />
-            <p className="text-slate-400 mb-4">No hay avisos de cobro registrados</p>
+            <AlertCircle className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
+            <p className="text-gray-600 dark:text-gray-400 mb-4">No hay avisos de cobro registrados</p>
             <button
               onClick={handleNew}
               className="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700"
@@ -437,33 +437,33 @@ export default function PaymentNoticeGenerator() {
               const iva = notice.iva || Math.round((notice.neto || 0) * 0.19);
               const total = notice.total || (notice.neto || 0) + iva;
               return (
-                <div key={notice.id} className="bg-slate-700 rounded-lg p-4 border border-slate-600 hover:border-blue-500 transition">
+                <div key={notice.id} className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 border border-neutral-200 dark:border-neutral-700 hover:border-blue-400 dark:hover:border-blue-500 transition">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1">
-                      <h3 className="font-bold text-white">{notice.cliente}</h3>
-                      <p className="text-slate-400 text-sm">{notice.rut} - {notice.servicio_titulo}</p>
+                      <h3 className="font-bold text-gray-900 dark:text-white">{notice.cliente}</h3>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm">{notice.rut} - {notice.servicio_titulo}</p>
                       {notice.project_id && projects.find(p => p.id === notice.project_id) && (
-                        <p className="text-blue-400 text-xs mt-1">Proyecto: {projects.find(p => p.id === notice.project_id)?.name}</p>
+                        <p className="text-blue-600 dark:text-blue-400 text-xs mt-1">Proyecto: {projects.find(p => p.id === notice.project_id)?.name}</p>
                       )}
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-blue-400">${total.toLocaleString('es-CL')}</p>
-                      <p className="text-xs text-slate-400">Período: {notice.periodo}</p>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">${total.toLocaleString('es-CL')}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Período: {notice.periodo}</p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3 mb-4 text-xs bg-slate-800 rounded p-3">
+                  <div className="grid grid-cols-3 gap-3 mb-4 text-xs bg-white dark:bg-neutral-800 rounded p-3 border border-neutral-200 dark:border-neutral-700">
                     <div>
-                      <span className="text-slate-400">Neto</span>
-                      <p className="text-white font-bold">${(notice.neto || 0).toLocaleString('es-CL')}</p>
+                      <span className="text-gray-600 dark:text-gray-400">Neto</span>
+                      <p className="text-gray-900 dark:text-white font-bold">${(notice.neto || 0).toLocaleString('es-CL')}</p>
                     </div>
                     <div>
-                      <span className="text-slate-400">IVA (19%)</span>
-                      <p className="text-white font-bold">${iva.toLocaleString('es-CL')}</p>
+                      <span className="text-gray-600 dark:text-gray-400">IVA (19%)</span>
+                      <p className="text-gray-900 dark:text-white font-bold">${iva.toLocaleString('es-CL')}</p>
                     </div>
                     <div>
-                      <span className="text-slate-400">Estado</span>
-                      <p className={`font-bold ${notice.estado === 'pagado' ? 'text-green-400' : 'text-red-400'}`}>
+                      <span className="text-gray-600 dark:text-gray-400">Estado</span>
+                      <p className={`font-bold ${notice.estado === 'pagado' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                         {notice.estado === 'pagado' ? 'Pagado' : 'Pendiente'}
                       </p>
                     </div>
@@ -472,7 +472,7 @@ export default function PaymentNoticeGenerator() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(notice)}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-600 text-white rounded text-sm font-bold hover:bg-slate-500 transition"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-neutral-300 dark:bg-neutral-700 text-gray-900 dark:text-white rounded text-sm font-bold hover:bg-neutral-400 dark:hover:bg-neutral-600 transition"
                     >
                       <Edit2 className="w-4 h-4" />
                       Editar

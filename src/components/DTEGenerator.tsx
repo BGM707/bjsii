@@ -136,7 +136,7 @@ export default function DTEGenerator({ receiptId, clientData, amount = 0 }: DTEG
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-bold text-white">DTE - Timbre Electrónico SII</h3>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">DTE - Timbre Electrónico SII</h3>
         <button
           onClick={() => setShowGenerator(!showGenerator)}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
@@ -147,9 +147,9 @@ export default function DTEGenerator({ receiptId, clientData, amount = 0 }: DTEG
       </div>
 
       {showGenerator && (
-        <form onSubmit={handleGenerateDTE} className="bg-slate-800 p-4 rounded-lg border border-slate-700 space-y-3">
+        <form onSubmit={handleGenerateDTE} className="bg-white dark:bg-neutral-800 p-4 rounded-lg border border-neutral-200 dark:border-neutral-700 space-y-3">
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-500/20 border border-red-500 rounded text-red-300 text-sm">
+            <div className="error-banner flex items-center gap-2 p-3 bg-red-50 dark:bg-red-500/20 border border-red-300 dark:border-red-500 rounded text-red-700 dark:text-red-300 text-sm">
               <AlertCircle className="w-4 h-4" />
               {error}
             </div>
@@ -157,22 +157,22 @@ export default function DTEGenerator({ receiptId, clientData, amount = 0 }: DTEG
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-300 text-sm font-bold mb-1">Folio</label>
+              <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-1">Folio</label>
               <input
                 type="text"
                 value={formData.folio}
                 onChange={(e) => setFormData({ ...formData, folio: e.target.value })}
-                className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm"
+                className="form-input w-full bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white text-sm"
                 disabled
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 text-sm font-bold mb-1">Tipo Documento</label>
+              <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-1">Tipo Documento</label>
               <select
                 value={formData.documentType}
                 onChange={(e) => setFormData({ ...formData, documentType: e.target.value })}
-                className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm"
+                className="form-input w-full bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white text-sm"
               >
                 <option value="boleta">Boleta</option>
                 <option value="factura">Factura</option>
@@ -188,7 +188,7 @@ export default function DTEGenerator({ receiptId, clientData, amount = 0 }: DTEG
               placeholder="Nombre Receptor"
               value={formData.recipientName}
               onChange={(e) => setFormData({ ...formData, recipientName: e.target.value })}
-              className="bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm"
+              className="form-input bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white text-sm"
               required
             />
             <input
@@ -196,7 +196,7 @@ export default function DTEGenerator({ receiptId, clientData, amount = 0 }: DTEG
               placeholder="RUT Receptor (ej: 12.345.678-9)"
               value={formData.recipientRut}
               onChange={(e) => setFormData({ ...formData, recipientRut: e.target.value })}
-              className="bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm"
+              className="form-input bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white text-sm"
               required
             />
           </div>
@@ -205,7 +205,7 @@ export default function DTEGenerator({ receiptId, clientData, amount = 0 }: DTEG
             placeholder="Descripción del servicio"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm"
+            className="form-input w-full bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white text-sm"
             rows={2}
           />
 
@@ -214,14 +214,14 @@ export default function DTEGenerator({ receiptId, clientData, amount = 0 }: DTEG
             placeholder="Monto Neto"
             value={formData.amount}
             onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) })}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm"
+            className="form-input w-full bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 text-gray-900 dark:text-white text-sm"
             required
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+            className="btn-success w-full bg-emerald-600 dark:bg-green-600 text-white py-2 rounded-lg hover:bg-emerald-700 dark:hover:bg-green-700 transition disabled:opacity-50"
           >
             {loading ? 'Generando...' : 'Generar y Descargar DTE + Timbre'}
           </button>
@@ -230,22 +230,22 @@ export default function DTEGenerator({ receiptId, clientData, amount = 0 }: DTEG
 
       {dtes.length > 0 && (
         <div className="space-y-2">
-          <p className="text-slate-400 text-sm">DTEs Generados:</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">DTEs Generados:</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
             {dtes.map(dte => (
-              <div key={dte.id} className="bg-slate-800 p-3 rounded border border-slate-700">
+              <div key={dte.id} className="bg-white dark:bg-neutral-800 p-3 rounded border border-neutral-200 dark:border-neutral-700">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-white font-bold text-sm">#{dte.folio}</span>
+                  <span className="text-gray-900 dark:text-white font-bold text-sm">#{dte.folio}</span>
                   <span className={`text-xs font-bold px-2 py-1 rounded ${
-                    dte.sii_status === 'registered' ? 'bg-green-500/20 text-green-300' :
-                    dte.sii_status === 'rejected' ? 'bg-red-500/20 text-red-300' :
-                    'bg-yellow-500/20 text-yellow-300'
+                    dte.sii_status === 'registered' ? 'bg-emerald-50 dark:bg-green-500/20 text-emerald-700 dark:text-green-300' :
+                    dte.sii_status === 'rejected' ? 'bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300' :
+                    'bg-amber-50 dark:bg-yellow-500/20 text-amber-700 dark:text-yellow-300'
                   }`}>
                     {dte.sii_status === 'registered' ? 'Registrado' : dte.sii_status === 'rejected' ? 'Rechazado' : 'Pendiente'}
                   </span>
                 </div>
-                <p className="text-slate-400 text-xs mb-1">{dte.recipient_name}</p>
-                <p className="text-slate-300 text-xs mb-2">Total: ${dte.total_amount.toLocaleString('es-CL')}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs mb-1">{dte.recipient_name}</p>
+                <p className="text-gray-700 dark:text-gray-300 text-xs mb-2">Total: ${dte.total_amount.toLocaleString('es-CL')}</p>
                 <div className="flex gap-1">
                   <button
                     onClick={() => {
@@ -269,7 +269,7 @@ export default function DTEGenerator({ receiptId, clientData, amount = 0 }: DTEG
                       element.click();
                       document.body.removeChild(element);
                     }}
-                    className="flex-1 text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700 transition"
+                    className="flex-1 text-xs bg-violet-600 text-white px-2 py-1 rounded hover:bg-violet-700 transition"
                   >
                     Timbre
                   </button>
