@@ -22,32 +22,44 @@ function App() {
   const [cobroPrefill, setCobroPrefill] = useState<CobroPrefill | null>(null);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setIsAuthenticated(true);
-        const storedAuth = localStorage.getItem('bjauth');
-        if (storedAuth) {
-          try { setUsername(JSON.parse(storedAuth).username); }
-          catch { setUsername('Fuko197160551'); }
-        } else {
-          setUsername('Fuko197160551');
-          localStorage.setItem('bjauth', JSON.stringify({ username: 'Fuko197160551', userId: session.user.id, timestamp: Date.now() }));
+    // Check for existing local auth first (works offline)
+    const storedAuth = localStorage.getItem('bjauth');
+    if (storedAuth) {
+      try {
+        const parsed = JSON.parse(storedAuth);
+        if (parsed.username) {
+          setIsAuthenticated(true);
+          setUsername(parsed.username);
         }
-      } else {
-        setIsAuthenticated(false); setUsername(''); localStorage.removeItem('bjauth');
-      }
-    });
+      } catch { /* ignore */ }
+    }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setIsAuthenticated(true);
-        const storedAuth = localStorage.getItem('bjauth');
-        if (storedAuth) { try { setUsername(JSON.parse(storedAuth).username); } catch { setUsername('Fuko197160551'); } }
-        else { setUsername('Fuko197160551'); }
-      }
-    });
+    // Then try Supabase auth
+    let subscription: any;
+    try {
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          setIsAuthenticated(true);
+          const stored = localStorage.getItem('bjauth');
+          if (stored) { try { setUsername(JSON.parse(stored).username); } catch { setUsername('Fuko197160551'); } }
+          else { setUsername('Fuko197160551'); }
+        } else if (!localStorage.getItem('bjauth')) {
+          setIsAuthenticated(false); setUsername('');
+        }
+      });
+      subscription = data.subscription;
 
-    return () => subscription.unsubscribe();
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          setIsAuthenticated(true);
+          const stored = localStorage.getItem('bjauth');
+          if (stored) { try { setUsername(JSON.parse(stored).username); } catch { setUsername('Fuko197160551'); } }
+          else { setUsername('Fuko197160551'); }
+        }
+      }).catch(() => {});
+    } catch { /* Supabase not available */ }
+
+    return () => { subscription?.unsubscribe(); };
   }, []);
 
   const handleLogout = async () => {
