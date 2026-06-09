@@ -11,13 +11,14 @@ import DTEManagement from './components/DTEManagement';
 import SIIMonitoringDashboard from './components/SIIMonitoringDashboard';
 import DatabaseImportExport from './components/DatabaseImportExport';
 import UserSettings from './components/UserSettings';
+import CashFlow from './components/CashFlow';
 import { supabase } from './lib/supabase';
 import { ThemeProvider } from './lib/theme';
 import { CobroPrefill } from './types/cobro';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentView, setCurrentView] = useState<'receipts' | 'service-orders' | 'quotations' | 'list' | 'projects' | 'cobros' | 'dte' | 'sii-monitor' | 'data' | 'settings'>('projects');
+  const [currentView, setCurrentView] = useState<'receipts' | 'service-orders' | 'quotations' | 'list' | 'projects' | 'cobros' | 'dte' | 'sii-monitor' | 'data' | 'settings' | 'cashflow'>('projects');
   const [username, setUsername] = useState('');
   const [cobroPrefill, setCobroPrefill] = useState<CobroPrefill | null>(null);
 
@@ -90,6 +91,7 @@ function App() {
         {currentView === 'list' && <DocumentsList />}
         {currentView === 'projects' && <ProjectsCarousel />}
         {currentView === 'cobros' && <CobrosNotes prefill={cobroPrefill} onPrefillConsumed={() => setCobroPrefill(null)} />}
+        {currentView === 'cashflow' && <CashFlow />}
         {currentView === 'dte' && <DTEManagement />}
         {currentView === 'sii-monitor' && <SIIMonitoringDashboard />}
         {currentView === 'data' && <DatabaseImportExport />}

@@ -1,4 +1,4 @@
-import { FileText, ClipboardList, List, CreditCard, FolderOpen, Receipt, LogOut, FileCode, Activity, Database, Settings, Menu, X, Sun, Moon } from 'lucide-react';
+import { FileText, ClipboardList, List, CreditCard, FolderOpen, Receipt, LogOut, FileCode, Activity, Database, Settings, Menu, X, Sun, Moon, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import { useTheme } from '../lib/theme';
 
@@ -13,6 +13,7 @@ interface LayoutProps {
 const menuItems = [
   { id: 'projects', label: 'Proyectos', icon: FolderOpen, group: 'Principal' },
   { id: 'cobros', label: 'Notas de Cobros', icon: Receipt, group: 'Principal' },
+  { id: 'cashflow', label: 'Caja y Ventas', icon: Wallet, group: 'Principal' },
   { id: 'receipts', label: 'Boletas', icon: FileText, group: 'Documentos' },
   { id: 'service-orders', label: 'Ordenes de Servicio', icon: ClipboardList, group: 'Documentos' },
   { id: 'quotations', label: 'Cotizaciones', icon: CreditCard, group: 'Documentos' },
