@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Upload, Database, FileJson, FileArchive, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Download, Upload, Database, FileJson, FileArchive, AlertCircle, CheckCircle, Loader2, Info } from 'lucide-react';
 import { supabase, getCurrentUserId } from '../lib/supabase';
 
 interface ImportResult {
@@ -13,7 +13,8 @@ export default function DatabaseImportExport() {
   const [exportLoading, setExportLoading] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [importResults, setImportResults] = useState<ImportResult[]>([]);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
 
   const TABLES = [
     'projects',
@@ -84,8 +85,8 @@ export default function DatabaseImportExport() {
       for (const [table, rows] of Object.entries(allData)) {
         for (const row of rows) {
           const cleanRow = { ...row };
-          delete cleanRow.id;
-          delete cleanRow.user_id;
+          delete (cleanRow as any).id;
+          delete (cleanRow as any).user_id;
           lines.push(`${table},upsert,${JSON.stringify(cleanRow).replace(/"/g, '""')}`);
         }
       }
@@ -113,6 +114,7 @@ export default function DatabaseImportExport() {
     setImportLoading(true);
     setImportResults([]);
     setMessage(null);
+    setProgress(null);
 
     try {
       const userId = getCurrentUserId();
@@ -131,8 +133,46 @@ export default function DatabaseImportExport() {
       setMessage({ type: 'error', text: `Error al importar: ${err.message || 'Error desconocido'}` });
     } finally {
       setImportLoading(false);
+      setProgress(null);
       e.target.value = '';
     }
+  };
+
+  // Insert rows in batches for better performance and error handling
+  const insertBatch = async (table: string, rows: any[], batchSize = 50): Promise<{ imported: number; skipped: number; errors: string[] }> => {
+    const result = { imported: 0, skipped: 0, errors: [] as string[] };
+
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const batch = rows.slice(i, i + batchSize);
+      setProgress({ current: Math.min(i + batchSize, rows.length), total: rows.length });
+
+      try {
+        const { error } = await supabase.from(table).insert(batch);
+        if (error) {
+          // If batch fails, try one by one to identify specific failures
+          for (const row of batch) {
+            const { error: singleError } = await supabase.from(table).insert([row]);
+            if (singleError) {
+              if (singleError.code === '23505') {
+                result.skipped++;
+              } else {
+                result.errors.push(singleError.message);
+                result.skipped++;
+              }
+            } else {
+              result.imported++;
+            }
+          }
+        } else {
+          result.imported += batch.length;
+        }
+      } catch (err: any) {
+        result.errors.push(err.message || 'Error en lote');
+        result.skipped += batch.length;
+      }
+    }
+
+    return result;
   };
 
   const importJSON = async (file: File, userId: string) => {
@@ -140,7 +180,7 @@ export default function DatabaseImportExport() {
     let data = JSON.parse(text);
     const results: ImportResult[] = [];
 
-    // Si es un array plano, detectar qué tabla es por los campos
+    // Si es un array plano, detectar que tabla es por los campos
     if (Array.isArray(data) && data.length > 0) {
       const firstRow = data[0];
       const detectedTable = detectTableFromFields(Object.keys(firstRow));
@@ -151,36 +191,30 @@ export default function DatabaseImportExport() {
 
     for (const table of TABLES) {
       const rows = data[table];
-      if (!Array.isArray(rows)) continue;
+      if (!Array.isArray(rows) || rows.length === 0) continue;
 
-      const result: ImportResult = { table, imported: 0, skipped: 0, errors: [] };
+      const mappedRows = rows
+        .map((row: any) => mapRowToTable(table, row, userId))
+        .filter(Boolean) as any[];
 
-      for (const row of rows) {
-        const mapped = mapRowToTable(table, row, userId);
-        if (!mapped) {
-          result.skipped++;
-          continue;
-        }
-
-        const { error } = await supabase.from(table).insert([mapped]);
-        if (error) {
-          if (error.code === '23505') {
-            result.skipped++;
-          } else {
-            result.errors.push(`${error.message}`);
-            result.skipped++;
-          }
-        } else {
-          result.imported++;
-        }
+      if (mappedRows.length === 0) {
+        results.push({ table, imported: 0, skipped: rows.length, errors: ['No se pudieron mapear los registros'] });
+        continue;
       }
 
-      results.push(result);
+      const batchResult = await insertBatch(table, mappedRows);
+      results.push({ table, ...batchResult });
     }
 
     setImportResults(results);
     const totalImported = results.reduce((sum, r) => sum + r.imported, 0);
-    setMessage({ type: 'success', text: `Importación completada: ${totalImported} registros importados` });
+    const totalSkipped = results.reduce((sum, r) => sum + r.skipped, 0);
+
+    if (totalImported === 0 && totalSkipped > 0) {
+      setMessage({ type: 'info', text: `Importación completada pero todos los registros fueron omitidos (${totalSkipped}). Posiblemente ya existen o hay errores de permisos.` });
+    } else {
+      setMessage({ type: 'success', text: `Importación completada: ${totalImported} registros importados, ${totalSkipped} omitidos` });
+    }
   };
 
   const importCSV = async (file: File, userId: string) => {
@@ -210,34 +244,28 @@ export default function DatabaseImportExport() {
     for (const [table, rows] of Object.entries(tableGroups)) {
       if (!TABLES.includes(table)) continue;
 
-      const result: ImportResult = { table, imported: 0, skipped: 0, errors: [] };
+      const mappedRows = rows
+        .map((row: any) => mapRowToTable(table, row, userId))
+        .filter(Boolean) as any[];
 
-      for (const row of rows) {
-        const mapped = mapRowToTable(table, row, userId);
-        if (!mapped) {
-          result.skipped++;
-          continue;
-        }
-
-        const { error } = await supabase.from(table).insert([mapped]);
-        if (error) {
-          if (error.code === '23505') {
-            result.skipped++;
-          } else {
-            result.errors.push(error.message);
-            result.skipped++;
-          }
-        } else {
-          result.imported++;
-        }
+      if (mappedRows.length === 0) {
+        results.push({ table, imported: 0, skipped: rows.length, errors: [] });
+        continue;
       }
 
-      results.push(result);
+      const batchResult = await insertBatch(table, mappedRows);
+      results.push({ table, ...batchResult });
     }
 
     setImportResults(results);
     const totalImported = results.reduce((sum, r) => sum + r.imported, 0);
-    setMessage({ type: 'success', text: `Importación CSV completada: ${totalImported} registros importados` });
+    const totalSkipped = results.reduce((sum, r) => sum + r.skipped, 0);
+
+    if (totalImported === 0 && totalSkipped > 0) {
+      setMessage({ type: 'info', text: `Importación CSV completada pero todos los registros fueron omitidos (${totalSkipped}). Posiblemente ya existen o hay errores de permisos.` });
+    } else {
+      setMessage({ type: 'success', text: `Importación CSV completada: ${totalImported} registros importados, ${totalSkipped} omitidos` });
+    }
   };
 
   const importSQLite = async (file: File, userId: string) => {
@@ -262,27 +290,21 @@ export default function DatabaseImportExport() {
 
       try {
         const stmt = db.prepare(`SELECT * FROM "${matchingTable}"`);
+        const rows: any[] = [];
         while (stmt.step()) {
           const row = stmt.getAsObject();
           const mapped = mapRowToTable(table, row, userId);
-          if (!mapped) {
-            result.skipped++;
-            continue;
-          }
-
-          const { error } = await supabase.from(table).insert([mapped]);
-          if (error) {
-            if (error.code === '23505') {
-              result.skipped++;
-            } else {
-              result.errors.push(error.message);
-              result.skipped++;
-            }
-          } else {
-            result.imported++;
-          }
+          if (mapped) rows.push(mapped);
+          else result.skipped++;
         }
         stmt.free();
+
+        if (rows.length > 0) {
+          const batchResult = await insertBatch(table, rows);
+          result.imported = batchResult.imported;
+          result.skipped += batchResult.skipped;
+          result.errors = batchResult.errors;
+        }
       } catch (err: any) {
         result.errors.push(err.message || 'Error leyendo tabla SQLite');
       }
@@ -293,40 +315,40 @@ export default function DatabaseImportExport() {
     db.close();
     setImportResults(results);
     const totalImported = results.reduce((sum, r) => sum + r.imported, 0);
-    setMessage({ type: 'success', text: `Importación SQLite completada: ${totalImported} registros importados` });
+    const totalSkipped = results.reduce((sum, r) => sum + r.skipped, 0);
+
+    if (totalImported === 0 && totalSkipped > 0) {
+      setMessage({ type: 'info', text: `Importación SQLite completada pero todos los registros fueron omitidos (${totalSkipped}). Posiblemente ya existen o hay errores de permisos.` });
+    } else {
+      setMessage({ type: 'success', text: `Importación SQLite completada: ${totalImported} registros importados, ${totalSkipped} omitidos` });
+    }
   };
 
   const detectTableFromFields = (fields: string[]): string | null => {
     const fieldsLower = fields.map(f => f.toLowerCase());
 
-    // Cobros notes: tiene folio, cliente, servicio_titulo, periodo, neto
     if (fieldsLower.includes('folio') && fieldsLower.includes('cliente') && fieldsLower.includes('servicio_titulo')) {
       return 'cobros_notes';
     }
 
-    // Receipts: tiene receipt_number, client_name, items
     if ((fieldsLower.includes('receipt_number') || fieldsLower.includes('numero')) && fieldsLower.includes('client_name')) {
       return 'receipts';
     }
 
-    // Service orders: tiene order_number, device_type, service_type
     if ((fieldsLower.includes('order_number') || fieldsLower.includes('numero')) && fieldsLower.includes('device_type')) {
       return 'service_orders';
     }
 
-    // Projects: tiene name/nombre y description/descripcion
     if (fieldsLower.includes('name') || fieldsLower.includes('nombre')) {
       if (fieldsLower.includes('description') || fieldsLower.includes('descripcion')) {
         return 'projects';
       }
     }
 
-    // DTE documents: tiene folio, company_rut, document_type
     if (fieldsLower.includes('folio') && fieldsLower.includes('company_rut')) {
       return 'dte_documents';
     }
 
-    // Payment notices: folio, cliente, servicio_titulo
     if (fieldsLower.includes('folio') && fieldsLower.includes('cliente')) {
       return 'payment_notices';
     }
@@ -527,6 +549,18 @@ export default function DatabaseImportExport() {
     <div className="max-w-4xl mx-auto space-y-6">
       <h2 className="text-2xl font-bold text-system">Importar / Exportar Base de Datos</h2>
 
+      {/* Info banner about RLS fix */}
+      <div className="p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg flex items-start gap-3">
+        <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+        <div>
+          <p className="text-blue-800 dark:text-blue-300 text-sm font-semibold">Permisos actualizados</p>
+          <p className="text-blue-700 dark:text-blue-300 text-xs mt-1">
+            Las políticas de seguridad (RLS) han sido actualizadas para permitir importación de datos sin autenticación de Supabase.
+            La app usa su propio sistema de login (localStorage + SHA256).
+          </p>
+        </div>
+      </div>
+
       {/* Export Section */}
       <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg border border-neutral-200 dark:border-neutral-700">
         <div className="flex items-center gap-3 mb-4">
@@ -582,6 +616,22 @@ export default function DatabaseImportExport() {
           </p>
         </div>
 
+        {/* Progress bar */}
+        {progress && (
+          <div className="mb-4">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <span>Progreso</span>
+              <span>{progress.current} / {progress.total}</span>
+            </div>
+            <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all"
+                style={{ width: `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         <label className={`flex items-center justify-center gap-2 px-6 py-3 border-2 border-dashed rounded-lg cursor-pointer transition ${
           importLoading
             ? 'border-neutral-300 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-900 opacity-50 cursor-not-allowed'
@@ -613,9 +663,11 @@ export default function DatabaseImportExport() {
         <div className={`p-4 rounded-lg flex items-center gap-3 ${
           message.type === 'success'
             ? 'bg-emerald-50 dark:bg-green-500/20 border border-emerald-200 dark:border-green-500 text-emerald-700 dark:text-green-300'
+            : message.type === 'info'
+            ? 'bg-blue-50 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500 text-blue-700 dark:text-blue-300'
             : 'bg-red-50 dark:bg-red-500/20 border border-red-200 dark:border-red-500 text-red-700 dark:text-red-300'
         }`}>
-          {message.type === 'success' ? <CheckCircle className="w-5 h-5 flex-shrink-0" /> : <AlertCircle className="w-5 h-5 flex-shrink-0" />}
+          {message.type === 'success' ? <CheckCircle className="w-5 h-5 flex-shrink-0" /> : message.type === 'info' ? <Info className="w-5 h-5 flex-shrink-0" /> : <AlertCircle className="w-5 h-5 flex-shrink-0" />}
           <span className="text-sm">{message.text}</span>
         </div>
       )}
@@ -626,11 +678,17 @@ export default function DatabaseImportExport() {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Resultado de la Importación</h3>
           <div className="space-y-3">
             {importResults.map((result, i) => (
-              <div key={i} className="bg-neutral-50 dark:bg-neutral-900 p-4 rounded-lg border border-neutral-200 dark:border-neutral-700">
+              <div key={i} className={`p-4 rounded-lg border ${
+                result.imported > 0
+                  ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30'
+                  : result.errors.some(e => e.includes('row-level security') || e.includes('violates'))
+                  ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30'
+                  : 'bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700'
+              }`}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-gray-900 dark:text-white font-medium">{result.table}</span>
                   <div className="flex gap-4 text-sm">
-                    <span className="text-green-600 dark:text-green-400">{result.imported} importados</span>
+                    <span className="text-green-600 dark:text-green-400 font-bold">{result.imported} importados</span>
                     <span className="text-yellow-600 dark:text-yellow-400">{result.skipped} omitidos</span>
                   </div>
                 </div>
@@ -643,6 +701,16 @@ export default function DatabaseImportExport() {
                       <p className="text-red-600 dark:text-red-400 text-xs">...y {result.errors.length - 3} errores más</p>
                     )}
                   </div>
+                )}
+                {result.imported === 0 && result.skipped > 0 && !result.errors.some(e => e.includes('row-level security')) && (
+                  <p className="text-yellow-600 dark:text-yellow-400 text-xs mt-2">
+                    Todos los registros fueron omitidos. Posiblemente ya existen en la base de datos (duplicados).
+                  </p>
+                )}
+                {result.imported === 0 && result.errors.some(e => e.includes('row-level security') || e.includes('violates')) && (
+                  <p className="text-red-600 dark:text-red-400 text-xs mt-2 font-bold">
+                    Error de permisos (RLS). Contacta al administrador para actualizar las políticas de seguridad.
+                  </p>
                 )}
               </div>
             ))}
