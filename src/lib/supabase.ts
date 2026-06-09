@@ -23,7 +23,7 @@ export function getCurrentUserId(): string {
 
 export async function getAuthUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
-  return session?.user?.id ?? null;
+  return session?.user?.id ?? APP_USER_ID;
 }
 
 export interface User {
