@@ -1,13 +1,28 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Trash2, Search, ArrowDownLeft, ArrowUpRight, Wallet, ShoppingCart, TrendingUp, Calendar, Filter, ChevronDown, ChevronUp, DollarSign, CreditCard, Banknote, CheckCircle, Clock, AlertCircle, Receipt, Package, ArrowLeftRight, X, Save, Loader2, Eye, CreditCard as Edit3 } from 'lucide-react';
+import { Plus, Trash2, Search, ArrowDownLeft, ArrowUpRight, Wallet, ShoppingCart, TrendingUp, Calendar, Filter, ChevronDown, ChevronUp, DollarSign, CreditCard, Banknote, CheckCircle, Clock, AlertCircle, Receipt, Package, ArrowLeftRight, X, Save, Loader2, Eye, CreditCard as Edit3, History, FileText, User, Edit2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatCLP } from '../types/invoice';
 import type { CashCategory, CashTransaction, Purchase, Sale, CashFlowSummary } from '../types/cashflow';
 import { showConfirm, showSuccess, showError, showToast } from '../lib/alerts';
 
-type ViewMode = 'overview' | 'entries' | 'purchases' | 'sales' | 'new-entry' | 'new-purchase' | 'new-sale';
+type ViewMode = 'overview' | 'entries' | 'purchases' | 'sales' | 'new-entry' | 'new-purchase' | 'new-sale' | 'history';
 type TransactionType = 'entry' | 'exit';
 type TabType = 'all' | 'entry' | 'exit';
+
+// Cash Log interface
+interface CashLog {
+  id: string;
+  action: 'create' | 'update' | 'delete';
+  entity_type: 'transaction' | 'purchase' | 'sale';
+  entity_id?: string;
+  entity_number?: string;
+  description?: string;
+  amount?: number;
+  previous_data?: Record<string, unknown>;
+  new_data?: Record<string, unknown>;
+  user_id?: string;
+  created_at: string;
+}
 
 const PAYMENT_METHODS = [
   { value: 'cash', label: 'Efectivo', icon: Banknote },
@@ -35,11 +50,40 @@ export default function CashFlow() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [categories, setCategories] = useState<CashCategory[]>([]);
+  const [logs, setLogs] = useState<CashLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [logFilter, setLogFilter] = useState<'all' | 'transaction' | 'purchase' | 'sale'>('all');
+
+  // Helper to log actions
+  const logAction = async (
+    action: 'create' | 'update' | 'delete',
+    entityType: 'transaction' | 'purchase' | 'sale',
+    entityId: string | undefined,
+    entityNumber: string | undefined,
+    description: string,
+    amount: number | undefined,
+    previousData?: Record<string, unknown>,
+    newData?: Record<string, unknown>
+  ) => {
+    try {
+      await supabase.from('cash_logs').insert([{
+        action,
+        entity_type: entityType,
+        entity_id: entityId,
+        entity_number: entityNumber,
+        description,
+        amount,
+        previous_data: previousData,
+        new_data: newData,
+      }]);
+    } catch (err) {
+      console.error('Error logging action:', err);
+    }
+  };
 
   // Form states
   const [entryForm, setEntryForm] = useState({
@@ -86,20 +130,23 @@ export default function CashFlow() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [tRes, pRes, sRes, cRes] = await Promise.all([
+      const [tRes, pRes, sRes, cRes, lRes] = await Promise.all([
         supabase.from('cash_transactions').select('*, category:cash_categories(*)').order('date', { ascending: false }),
         supabase.from('purchases').select('*').order('date', { ascending: false }),
         supabase.from('sales').select('*').order('date', { ascending: false }),
         supabase.from('cash_categories').select('*').eq('active', true).order('name'),
+        supabase.from('cash_logs').select('*').order('created_at', { ascending: false }).limit(100),
       ]);
       if (tRes.error) console.error('transactions error:', tRes.error);
       if (pRes.error) console.error('purchases error:', pRes.error);
       if (sRes.error) console.error('sales error:', sRes.error);
       if (cRes.error) console.error('categories error:', cRes.error);
+      if (lRes.error) console.error('logs error:', lRes.error);
       setTransactions(tRes.data || []);
       setPurchases(pRes.data || []);
       setSales(sRes.data || []);
       setCategories(cRes.data || []);
+      setLogs(lRes.data || []);
     } catch (err) {
       console.error('Error loading cash flow data:', err);
     } finally {
@@ -145,7 +192,7 @@ export default function CashFlow() {
     if (!entryForm.description.trim()) { setMessage({ type: 'error', text: 'Descripcion requerida' }); return; }
     setSaving(true);
     try {
-      const { error } = await supabase.from('cash_transactions').insert([{
+      const { data, error } = await supabase.from('cash_transactions').insert([{
         type: entryForm.type,
         amount,
         description: entryForm.description,
@@ -155,8 +202,22 @@ export default function CashFlow() {
         contact_name: entryForm.contact_name || null,
         contact_rut: entryForm.contact_rut || null,
         date: entryForm.date,
-      }]);
+      }]).select();
       if (error) throw error;
+
+      // Log action
+      const newEntry = data?.[0];
+      await logAction(
+        'create',
+        'transaction',
+        newEntry?.id,
+        entryForm.document_number,
+        `${entryForm.type === 'entry' ? 'Entrada' : 'Salida'}: ${entryForm.description}`,
+        amount,
+        undefined,
+        { type: entryForm.type, amount, description: entryForm.description, contact: entryForm.contact_name }
+      );
+
       setMessage({ type: 'success', text: 'Movimiento registrado correctamente' });
       setEntryForm({ type: 'entry', amount: '', description: '', category_id: '', payment_method: 'cash', document_number: '', contact_name: '', contact_rut: '', date: new Date().toISOString().split('T')[0] });
       await loadData();
@@ -177,7 +238,7 @@ export default function CashFlow() {
       const subtotal = validItems.reduce((s, i) => s + i.total, 0);
       const tax = Math.round(subtotal * 0.19);
       const total = subtotal + tax;
-      const { error } = await supabase.from('purchases').insert([{
+      const { data, error } = await supabase.from('purchases').insert([{
         supplier_name: purchaseForm.supplier_name,
         supplier_rut: purchaseForm.supplier_rut || null,
         description: purchaseForm.description || null,
@@ -189,8 +250,9 @@ export default function CashFlow() {
         subtotal,
         tax,
         total,
-      }]);
+      }]).select();
       if (error) throw error;
+
       // Also create cash exit
       await supabase.from('cash_transactions').insert([{
         type: 'exit',
@@ -202,6 +264,20 @@ export default function CashFlow() {
         contact_rut: purchaseForm.supplier_rut || null,
         date: purchaseForm.date,
       }]);
+
+      // Log action
+      const newPurchase = data?.[0];
+      await logAction(
+        'create',
+        'purchase',
+        newPurchase?.id,
+        purchaseForm.document_number,
+        `Compra a ${purchaseForm.supplier_name} - ${validItems.length} items`,
+        total,
+        undefined,
+        { supplier: purchaseForm.supplier_name, total, items: validItems.length }
+      );
+
       setMessage({ type: 'success', text: 'Compra registrada correctamente' });
       setPurchaseForm({ supplier_name: '', supplier_rut: '', description: '', document_number: '', payment_method: 'transfer', status: 'paid', date: new Date().toISOString().split('T')[0], items: [{ description: '', quantity: 1, price: 0, total: 0 }] });
       await loadData();
@@ -222,7 +298,7 @@ export default function CashFlow() {
       const subtotal = validItems.reduce((s, i) => s + i.total, 0);
       const tax = Math.round(subtotal * 0.19);
       const total = subtotal + tax;
-      const { error } = await supabase.from('sales').insert([{
+      const { data, error } = await supabase.from('sales').insert([{
         client_name: saleForm.client_name,
         client_rut: saleForm.client_rut || null,
         description: saleForm.description || null,
@@ -234,8 +310,9 @@ export default function CashFlow() {
         subtotal,
         tax,
         total,
-      }]);
+      }]).select();
       if (error) throw error;
+
       // Also create cash entry
       await supabase.from('cash_transactions').insert([{
         type: 'entry',
@@ -247,6 +324,20 @@ export default function CashFlow() {
         contact_rut: saleForm.client_rut || null,
         date: saleForm.date,
       }]);
+
+      // Log action
+      const newSale = data?.[0];
+      await logAction(
+        'create',
+        'sale',
+        newSale?.id,
+        saleForm.document_number,
+        `Venta a ${saleForm.client_name} - ${validItems.length} items`,
+        total,
+        undefined,
+        { client: saleForm.client_name, total, items: validItems.length }
+      );
+
       setMessage({ type: 'success', text: 'Venta registrada correctamente' });
       setSaleForm({ client_name: '', client_rut: '', description: '', document_number: '', payment_method: 'transfer', status: 'paid', date: new Date().toISOString().split('T')[0], items: [{ description: '', quantity: 1, price: 0, total: 0 }] });
       await loadData();
@@ -262,8 +353,26 @@ export default function CashFlow() {
     const confirmed = await showConfirm('¿Eliminar este movimiento?', 'Esta acción no se puede deshacer.', 'Eliminar', 'Cancelar');
     if (!confirmed) return;
     try {
+      // Get data before deleting for log
+      const { data: txn } = await supabase.from('cash_transactions').select('*').eq('id', id).single();
+
       const { error } = await supabase.from('cash_transactions').delete().eq('id', id);
       if (error) throw error;
+
+      // Log action
+      if (txn) {
+        await logAction(
+          'delete',
+          'transaction',
+          id,
+          txn.document_number,
+          `Eliminado: ${txn.type === 'entry' ? 'Entrada' : 'Salida'} - ${txn.description}`,
+          txn.amount,
+          { type: txn.type, amount: txn.amount, description: txn.description },
+          undefined
+        );
+      }
+
       showToast('success', 'Movimiento eliminado');
       loadData();
     } catch (err) {
@@ -275,8 +384,26 @@ export default function CashFlow() {
     const confirmed = await showConfirm('¿Eliminar esta compra?', 'Esta acción no se puede deshacer.', 'Eliminar', 'Cancelar');
     if (!confirmed) return;
     try {
+      // Get data before deleting for log
+      const { data: purchase } = await supabase.from('purchases').select('*').eq('id', id).single();
+
       const { error } = await supabase.from('purchases').delete().eq('id', id);
       if (error) throw error;
+
+      // Log action
+      if (purchase) {
+        await logAction(
+          'delete',
+          'purchase',
+          id,
+          purchase.document_number,
+          `Eliminada compra a ${purchase.supplier_name}`,
+          purchase.total,
+          { supplier: purchase.supplier_name, total: purchase.total },
+          undefined
+        );
+      }
+
       showToast('success', 'Compra eliminada');
       loadData();
     } catch (err) {
@@ -288,8 +415,26 @@ export default function CashFlow() {
     const confirmed = await showConfirm('¿Eliminar esta venta?', 'Esta acción no se puede deshacer.', 'Eliminar', 'Cancelar');
     if (!confirmed) return;
     try {
+      // Get data before deleting for log
+      const { data: sale } = await supabase.from('sales').select('*').eq('id', id).single();
+
       const { error } = await supabase.from('sales').delete().eq('id', id);
       if (error) throw error;
+
+      // Log action
+      if (sale) {
+        await logAction(
+          'delete',
+          'sale',
+          id,
+          sale.document_number,
+          `Eliminada venta a ${sale.client_name}`,
+          sale.total,
+          { client: sale.client_name, total: sale.total },
+          undefined
+        );
+      }
+
       showToast('success', 'Venta eliminada');
       loadData();
     } catch (err) {
@@ -824,6 +969,106 @@ export default function CashFlow() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* History / Logs Section */}
+      <div className="card overflow-hidden">
+        <div className="px-5 py-4 border-b border-neutral-200 dark:border-neutral-700 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <History className="w-5 h-5 text-blue-500" />
+            <h3 className="font-bold text-gray-900 dark:text-gray-100">Historial de Actividad</h3>
+            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/20 px-2 py-0.5 rounded-full">{logs.length}</span>
+          </div>
+          <div className="flex gap-1">
+            {(['all', 'transaction', 'purchase', 'sale'] as const).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setLogFilter(filter)}
+                className={`px-2 py-1 text-xs font-medium rounded transition ${
+                  logFilter === filter
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                    : 'bg-neutral-100 text-gray-500 dark:bg-neutral-800 dark:text-gray-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                }`}
+              >
+                {filter === 'all' ? 'Todos' : filter === 'transaction' ? 'Caja' : filter === 'purchase' ? 'Compras' : 'Ventas'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {logs.length === 0 ? (
+          <div className="p-6 text-center text-gray-400 text-sm">
+            <History className="w-8 h-8 mx-auto mb-2 opacity-30" />
+            No hay actividad registrada
+          </div>
+        ) : (
+          <div className="divide-y divide-neutral-100 dark:divide-neutral-800 max-h-80 overflow-y-auto">
+            {logs
+              .filter((log) => logFilter === 'all' || log.entity_type === logFilter)
+              .slice(0, 50)
+              .map((log) => {
+                const actionColors: Record<string, string> = {
+                  create: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
+                  update: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
+                  delete: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+                };
+                const actionLabels: Record<string, string> = {
+                  create: 'Creado',
+                  update: 'Actualizado',
+                  delete: 'Eliminado',
+                };
+                const entityIcons: Record<string, typeof ArrowLeftRight> = {
+                  transaction: ArrowLeftRight,
+                  purchase: ShoppingCart,
+                  sale: TrendingUp,
+                };
+                const Icon = entityIcons[log.entity_type] || FileText;
+
+                return (
+                  <div key={log.id} className="p-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition">
+                    <div className="flex items-start gap-3">
+                      <div className={`p-2 rounded-lg ${
+                        log.entity_type === 'transaction' ? 'bg-blue-50 dark:bg-blue-500/10' :
+                        log.entity_type === 'purchase' ? 'bg-orange-50 dark:bg-orange-500/10' :
+                        'bg-emerald-50 dark:bg-emerald-500/10'
+                      }`}>
+                        <Icon className={`w-4 h-4 ${
+                          log.entity_type === 'transaction' ? 'text-blue-500' :
+                          log.entity_type === 'purchase' ? 'text-orange-500' :
+                          'text-emerald-500'
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold ${actionColors[log.action]}`}>
+                            {actionLabels[log.action]}
+                          </span>
+                          <span className="text-xs text-gray-400 capitalize">{log.entity_type === 'transaction' ? 'Movimiento' : log.entity_type === 'purchase' ? 'Compra' : 'Venta'}</span>
+                          {log.entity_number && (
+                            <span className="text-xs text-gray-500 font-mono">#{log.entity_number}</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-900 dark:text-gray-100 truncate">{log.description}</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(log.created_at).toLocaleString('es-CL', {
+                            day: '2-digit',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                      {log.amount !== null && log.amount !== undefined && (
+                        <div className={`text-right font-bold text-sm ${log.action === 'delete' ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                          {log.entity_type === 'purchase' ? '-' : log.entity_type === 'sale' ? '+' : ''}{formatCLP(log.amount)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        )}
       </div>
     </div>
   );
