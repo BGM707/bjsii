@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, User, Loader } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { showError, showSuccess } from '../lib/alerts';
 
 interface LoginProps {
   onLoginSuccess: (username: string) => void;
@@ -9,12 +10,11 @@ interface LoginProps {
 export default function Login({ onLoginSuccess }: LoginProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(''); setLoading(true);
+    setLoading(true);
     try {
       // Try Supabase auth first
       const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -22,24 +22,27 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       });
       if (!authError && data.user) {
         localStorage.setItem('bjauth', JSON.stringify({ username: username || 'Fuko197160551', userId: data.user.id, timestamp: Date.now() }));
+        showSuccess('Bienvenido', `Hola, ${username || 'Fuko197160551'}`, 2000);
         onLoginSuccess(username || 'Fuko197160551');
         return;
       }
       // Fallback: accept any non-empty password when Supabase is unavailable
       if (password.length > 0) {
         localStorage.setItem('bjauth', JSON.stringify({ username: username || 'Fuko197160551', userId: 'local', timestamp: Date.now() }));
+        showSuccess('Sesion iniciada', 'Modo local activado', 2000);
         onLoginSuccess(username || 'Fuko197160551');
         return;
       }
-      setError('Credenciales invalidas. Verifica tu contrasena.');
+      showError('Credenciales invalidas', 'Verifica tu contrasena');
     } catch {
       // Supabase unreachable — allow local login
       if (password.length > 0) {
         localStorage.setItem('bjauth', JSON.stringify({ username: username || 'Fuko197160551', userId: 'local', timestamp: Date.now() }));
+        showSuccess('Sesion iniciada', 'Modo local activado', 2000);
         onLoginSuccess(username || 'Fuko197160551');
         return;
       }
-      setError('Error al procesar las credenciales');
+      showError('Error', 'Ingresa tu contrasena para continuar');
     } finally { setLoading(false); }
   };
 
@@ -74,7 +77,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                   className="form-input pl-10" placeholder="Ingresa tu contrasena" disabled={loading} />
               </div>
             </div>
-            {error && <div className="error-banner"><span>{error}</span></div>}
             <button type="submit" disabled={loading} className="w-full btn-primary py-2.5 disabled:opacity-50">
               {loading ? <><Loader className="w-4 h-4 animate-spin" />Verificando...</> : 'Ingresar'}
             </button>

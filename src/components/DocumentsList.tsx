@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FileText, ClipboardList, Printer, Download, Mail, Eye, RefreshCw, Search, CreditCard } from 'lucide-react';
 import { localDB, Receipt, ServiceOrder, Quotation } from '../lib/database';
 import { exportToPDF, exportToExcel, sendEmail } from '../utils/export';
+import { showWarning, showToast } from '../lib/alerts';
 
 export default function DocumentsList() {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
@@ -65,10 +66,11 @@ export default function DocumentsList() {
   const handleSendEmail = async (doc: Receipt | ServiceOrder | Quotation, type: 'receipt' | 'service_order' | 'quotation') => {
     const email = 'client_email' in doc ? doc.client_email : '';
     if (!email) {
-      alert('Este documento no tiene un correo electrónico asociado');
+      showWarning('Sin correo', 'Este documento no tiene un correo electrónico asociado');
       return;
     }
     await sendEmail(email, type, doc);
+    showToast('success', 'Email enviado');
   };
 
   const getStatusBadge = (status: string) => {

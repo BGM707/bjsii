@@ -6,6 +6,11 @@ import {
   Copy, Archive, RotateCcw, Settings, Zap
 } from 'lucide-react';
 import { supabase, getCurrentUserId } from '../lib/supabase';
+import {
+  showSuccess, showError, showWarning, showInfo, showConfirm,
+  showDeleteMultipleConfirm, showImportConfirm, showExportSuccess,
+  showProgress, updateProgress, closeProgress, showToast
+} from '../lib/alerts';
 
 interface TableStats {
   name: string;
@@ -170,7 +175,7 @@ export default function DatabaseImportExport() {
   // Export functions
   const exportJSON = async () => {
     if (selectedTables.length === 0) {
-      setMessage({ type: 'warning', text: 'Selecciona al menos una tabla para exportar' });
+      showWarning('Selecciona tablas', 'Debes seleccionar al menos una tabla para exportar');
       return;
     }
 
@@ -220,9 +225,9 @@ export default function DatabaseImportExport() {
       localStorage.setItem('lastDbExport', new Date().toISOString());
       setLastExportDate(new Date().toISOString());
       saveBackupRecord(selectedTables, exportedCount, fileName, 'json');
-      setMessage({ type: 'success', text: `Exportacion completada: ${exportedCount} registros de ${selectedTables.length} tablas` });
+      showExportSuccess(exportedCount, selectedTables.length, 'json');
     } catch (err: any) {
-      setMessage({ type: 'error', text: `Error al exportar: ${err.message}` });
+      showError('Error al exportar', err.message);
     } finally {
       setExportLoading(false);
     }
@@ -230,7 +235,7 @@ export default function DatabaseImportExport() {
 
   const exportCSV = async () => {
     if (selectedTables.length === 0) {
-      setMessage({ type: 'warning', text: 'Selecciona al menos una tabla para exportar' });
+      showWarning('Selecciona tablas', 'Debes seleccionar al menos una tabla para exportar');
       return;
     }
 
@@ -292,9 +297,9 @@ export default function DatabaseImportExport() {
       localStorage.setItem('lastDbExport', new Date().toISOString());
       setLastExportDate(new Date().toISOString());
       saveBackupRecord(selectedTables, exportedCount, fileName, 'csv');
-      setMessage({ type: 'success', text: `Exportacion CSV completada: ${exportedCount} registros` });
+      showExportSuccess(exportedCount, selectedTables.length, 'csv');
     } catch (err: any) {
-      setMessage({ type: 'error', text: `Error al exportar CSV: ${err.message}` });
+      showError('Error al exportar CSV', err.message);
     } finally {
       setExportLoading(false);
     }
@@ -320,11 +325,11 @@ export default function DatabaseImportExport() {
       } else if (ext === 'db' || ext === 'sqlite' || ext === 'sqlite3') {
         await previewSQLite(file, userId);
       } else {
-        setMessage({ type: 'error', text: 'Formato no soportado. Usa JSON, CSV o SQLite' });
+        showError('Formato no soportado', 'Usa un archivo JSON, CSV o SQLite (.db, .sqlite, .sqlite3)');
         setPendingFile(null);
       }
     } catch (err: any) {
-      setMessage({ type: 'error', text: `Error al leer archivo: ${err.message}` });
+      showError('Error al leer archivo', err.message);
       setPendingFile(null);
     } finally {
       setImportLoading(false);
@@ -552,14 +557,19 @@ export default function DatabaseImportExport() {
       const totalSkipped = results.reduce((sum, r) => sum + r.skipped, 0);
 
       if (totalImported === 0 && totalSkipped > 0) {
-        setMessage({ type: 'warning', text: `Importacion completada pero todos los registros fueron omitidos (${totalSkipped})` });
+        showWarning('Importacion completada', `Todos los registros fueron omitidos (${totalSkipped}). Posiblemente ya existen en la base de datos.`);
       } else {
-        setMessage({ type: 'success', text: `Importacion completada: ${totalImported} importados, ${totalSkipped} omitidos` });
+        showSuccess(
+          'Importacion completada',
+          `<strong>${totalImported}</strong> registros importados correctamente<br>
+          <span class="text-yellow-600">${totalSkipped} omitidos (duplicados o errores)</span>`,
+          0
+        );
       }
 
       loadStats(); // Refresh stats
     } catch (err: any) {
-      setMessage({ type: 'error', text: `Error al importar: ${err.message}` });
+      showError('Error al importar', err.message);
     } finally {
       setImportLoading(false);
       setPendingFile(null);
@@ -1586,24 +1596,34 @@ export default function DatabaseImportExport() {
               <button
                 onClick={async () => {
                   if (cleanupTables.length === 0) return;
-                  const tableNames = cleanupTables.map(t => ALL_TABLES.find(a => a.name === t)?.label || t).join(', ');
-                  if (!confirm(`Eliminar TODOS los registros de: ${tableNames}?\n\nEsta accion no se puede deshacer.`)) return;
+
+                  const totalRecords = cleanupTables.reduce((sum, t) => {
+                    const stat = stats.find(s => s.name === t);
+                    return sum + (stat?.count || 0);
+                  }, 0);
+
+                  const confirmed = await showDeleteMultipleConfirm(totalRecords, 'registro');
+                  if (!confirmed) return;
 
                   setMessage(null);
                   try {
+                    showProgress('Eliminando registros', `Procesando ${cleanupTables.length} tablas...`);
                     let deletedCount = 0;
                     for (const table of cleanupTables) {
+                      updateProgress(`Eliminando ${ALL_TABLES.find(a => a.name === table)?.label}...`);
                       const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
                       if (!error) {
                         const stat = stats.find(s => s.name === table);
                         deletedCount += stat?.count || 0;
                       }
                     }
-                    setMessage({ type: 'success', text: `Eliminados ${deletedCount} registros de ${cleanupTables.length} tablas` });
+                    closeProgress();
+                    await showSuccess('Registros eliminados', `${deletedCount} registros eliminados de ${cleanupTables.length} tablas`, 3000);
                     setCleanupTables([]);
                     loadStats();
                   } catch (err: any) {
-                    setMessage({ type: 'error', text: `Error: ${err.message}` });
+                    closeProgress();
+                    showError('Error al eliminar', err.message);
                   }
                 }}
                 disabled={cleanupTables.length === 0}

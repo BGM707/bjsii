@@ -3,6 +3,7 @@ import { Plus, Trash2, Save, Printer, Mail, Download, Eye, EyeOff, Percent, Doll
 import { localDB, Quotation, DocumentItem } from '../lib/database';
 import { supabase, Project, getAuthUserId } from '../lib/supabase';
 import { exportToPDF, exportToExcel, sendEmail } from '../utils/export';
+import { showSuccess, showError, showWarning, showToast } from '../lib/alerts';
 
 export default function QuotationForm() {
   const [loading, setLoading] = useState(false);
@@ -156,8 +157,8 @@ export default function QuotationForm() {
       });
       setItems([{ 
         description: '', 
-        quantity: 1, 
-        price: 0, 
+        quantity: 1,
+        price: 0,
         total: 0,
         discount_type: 'percentage',
         discount_value: 0,
@@ -166,7 +167,7 @@ export default function QuotationForm() {
       }]);
     } catch (error) {
       console.error('Error al crear cotización:', error);
-      alert('Error al crear la cotización. Por favor intente nuevamente.');
+      showError('Error', 'No se pudo crear la cotización. Por favor intente nuevamente.');
     } finally {
       setLoading(false);
     }
@@ -189,6 +190,7 @@ export default function QuotationForm() {
       total,
     };
     await exportToPDF('quotation', quotation);
+    showToast('success', 'PDF exportado');
   };
 
   const handleExportExcel = async () => {
@@ -204,11 +206,12 @@ export default function QuotationForm() {
       total,
     };
     await exportToExcel('quotation', quotation);
+    showToast('success', 'Excel exportado');
   };
 
   const handleSendEmail = async () => {
     if (!formData.client_email) {
-      alert('Por favor ingrese un correo electrónico del cliente');
+      showWarning('Sin correo', 'Por favor ingrese un correo electrónico del cliente');
       return;
     }
     const { subtotal, totalDiscount, tax, total, itemsWithTotals } = calculateTotals(items);
@@ -223,6 +226,7 @@ export default function QuotationForm() {
       total,
     };
     await sendEmail(formData.client_email, 'quotation', quotation);
+    showToast('success', 'Email enviado');
   };
 
   const { subtotal, totalDiscount, tax, total } = calculateTotals(items);

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Printer, Send, ArrowLeft, Save, Download, MessageCircle, Loader, AlertCircle, Eye, CreditCard as Edit2, Search, Copy } from 'lucide-react';import { supabase, CobrosNote, Project, getAuthUserId } from '../lib/supabase';
+import { Plus, Trash2, Printer, Send, ArrowLeft, Save, Download, MessageCircle, Loader, AlertCircle, Eye, CreditCard as Edit2, Search, Copy } from 'lucide-react';
+import { supabase, CobrosNote, Project, getAuthUserId } from '../lib/supabase';
 import { Invoice, InvoiceFormData, calcularTotales, formatCLP } from '../types/invoice';
 import InvoicePreview from './InvoicePreview';
 import { generateInvoicePDF } from '../lib/pdf';
 import DTEGenerator from './DTEGenerator';
 import { CobroPrefill } from '../types/cobro';
+import { showConfirm, showSuccess, showError, showToast } from '../lib/alerts';
 
 type ViewMode = 'list' | 'editor' | 'preview';
 
@@ -261,20 +263,22 @@ export default function CobrosNotes({ prefill, onPrefillConsumed }: CobrosNotesP
         setViewMode('list');
       }, 1000);
     } catch (err: any) {
-      setError(err.message || 'Error al guardar la nota de cobro.');
+      showError('Error al guardar', err.message || 'Error al guardar la nota de cobro.');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Eliminar esta nota de cobro?')) return;
+    const confirmed = await showConfirm('¿Eliminar esta nota de cobro?', 'Esta acción no se puede deshacer.', 'Eliminar', 'Cancelar');
+    if (!confirmed) return;
     try {
       const { error } = await supabase.from('cobros_notes').delete().eq('id', id);
       if (error) throw error;
+      showToast('success', 'Nota de cobro eliminada');
       loadNotes();
     } catch (err) {
-      console.error('Error deleting note:', err);
+      showError('Error', 'No se pudo eliminar la nota de cobro');
     }
   };
 

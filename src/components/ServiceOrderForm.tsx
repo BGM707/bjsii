@@ -3,6 +3,7 @@ import { Save, ArrowLeft, Plus, Trash2, CreditCard as Edit2, Eye, Loader, AlertC
 import { supabase, ServiceOrder, Project, CobrosNote, getAuthUserId } from '../lib/supabase';
 import { generateInvoicePDF } from '../lib/pdf';
 import { CobroPrefill } from '../types/cobro';
+import { showConfirm, showSuccess, showError, showWarning, showToast } from '../lib/alerts';
 
 type ViewMode = 'list' | 'editor' | 'preview';
 
@@ -141,20 +142,21 @@ export default function ServiceOrderForm({ onGenerateCobro }: ServiceOrderFormPr
         if (error) throw error;
       }
 
-      setSuccess('Orden de servicio guardada correctamente.');
       await loadOrders();
-      setTimeout(() => setViewMode('list'), 800);
-    } catch (err: any) { setError(err.message || 'Error al guardar la orden de servicio.'); }
+      setTimeout(() => { setViewMode('list'); showToast('success', 'Orden de servicio guardada'); }, 800);
+    } catch (err: any) { showError('Error al guardar', err.message || 'Error al guardar la orden de servicio.'); }
     finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Eliminar esta orden de servicio?')) return;
+    const confirmed = await showConfirm('¿Eliminar esta orden de servicio?', 'Esta acción no se puede deshacer. Los datos se perderán permanentemente.', 'Eliminar', 'Cancelar');
+    if (!confirmed) return;
     try {
       const { error } = await supabase.from('service_orders').delete().eq('id', id);
       if (error) throw error;
+      showToast('success', 'Orden eliminada');
       loadOrders();
-    } catch (err) { console.error('Error deleting order:', err); }
+    } catch (err) { showError('Error al eliminar', 'No se pudo eliminar la orden'); }
   };
 
   const toggleStatus = async (order: ServiceOrder) => {
@@ -162,8 +164,9 @@ export default function ServiceOrderForm({ onGenerateCobro }: ServiceOrderFormPr
     try {
       const { error } = await supabase.from('service_orders').update({ status: next[order.status] || 'pending', updated_at: new Date().toISOString() }).eq('id', order.id);
       if (error) throw error;
+      showToast('success', `Estado: ${statusLabels[next[order.status] || 'pending']}`);
       loadOrders();
-    } catch (err) { console.error('Error updating status:', err); }
+    } catch (err) { showError('Error', 'No se pudo actualizar el estado'); }
   };
 
   const handlePrintPDF = async () => {
@@ -173,7 +176,8 @@ export default function ServiceOrderForm({ onGenerateCobro }: ServiceOrderFormPr
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = `OS-${editingOrder?.order_number || 'NUEVA'}.pdf`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-    } catch (e) { console.error('Error generating PDF:', e); }
+      showToast('success', 'PDF descargado');
+    } catch (e) { showError('Error al generar PDF', 'No se pudo generar el documento'); }
     finally { setGeneratingPDF(false); }
   };
 

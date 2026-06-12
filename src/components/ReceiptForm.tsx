@@ -3,6 +3,7 @@ import { Save, ArrowLeft, Plus, Trash2, CreditCard as Edit2, Eye, Loader, AlertC
 import { supabase, Receipt as ReceiptType, Project, CobrosNote, getAuthUserId } from '../lib/supabase';
 import { generateInvoicePDF } from '../lib/pdf';
 import { CobroPrefill } from '../types/cobro';
+import { showConfirm, showSuccess, showError, showWarning, showToast } from '../lib/alerts';
 
 type ViewMode = 'list' | 'editor' | 'preview';
 
@@ -162,18 +163,22 @@ export default function ReceiptForm({ onGenerateCobro }: ReceiptFormProps) {
 
       setSuccess('Boleta guardada correctamente.');
       await loadReceipts();
-      setTimeout(() => setViewMode('list'), 800);
-    } catch (err: any) { setError(err.message || 'Error al guardar la boleta.'); }
+      setTimeout(() => { setViewMode('list'); showToast('success', 'Boleta guardada correctamente'); }, 800);
+    } catch (err: any) { showError('Error al guardar', err.message || 'Error al guardar la boleta.'); }
     finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Eliminar esta boleta?')) return;
+    const confirmed = await showConfirm('¿Eliminar esta boleta?', 'Esta acción no se puede deshacer. Los datos se perderán permanentemente.', 'Eliminar', 'Cancelar');
+    if (!confirmed) return;
     try {
       const { error } = await supabase.from('receipts').delete().eq('id', id);
       if (error) throw error;
+      showToast('success', 'Boleta eliminada');
       loadReceipts();
-    } catch (err) { console.error('Error deleting receipt:', err); }
+    } catch (err) {
+      showError('Error al eliminar', 'No se pudo eliminar la boleta');
+    }
   };
 
   const handlePrintPDF = async () => {
@@ -183,7 +188,8 @@ export default function ReceiptForm({ onGenerateCobro }: ReceiptFormProps) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = `BOL-${editingReceipt?.receipt_number || 'NUEVA'}.pdf`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-    } catch (e) { console.error('Error generating PDF:', e); }
+      showToast('success', 'PDF descargado');
+    } catch (e) { showError('Error al generar PDF', 'No se pudo generar el documento'); }
     finally { setGeneratingPDF(false); }
   };
 
@@ -193,7 +199,11 @@ export default function ReceiptForm({ onGenerateCobro }: ReceiptFormProps) {
     setGeneratingPDF(true);
     try {
       const tel = (editingReceipt?.client_phone || '').replace('+', '').replace(/\s/g, '');
-      if (!tel) { setGeneratingPDF(false); return; }
+      if (!tel) {
+        showWarning('Sin telefono', 'El cliente no tiene numero de telefono registrado');
+        setGeneratingPDF(false);
+        return;
+      }
       const msg = encodeURIComponent(`Hola ${editingReceipt?.client_name || ''}! Te envio la boleta ${editingReceipt?.receipt_number || ''}. Total: $${Number(editingReceipt?.total || 0).toLocaleString('es-CL')}. Saludos!`);
       try {
         const blob = await generateInvoicePDF('receipt-print-area', `BOL-${editingReceipt?.receipt_number || 'NUEVA'}.pdf`);

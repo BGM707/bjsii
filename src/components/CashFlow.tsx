@@ -3,6 +3,7 @@ import { Plus, Trash2, Search, ArrowDownLeft, ArrowUpRight, Wallet, ShoppingCart
 import { supabase } from '../lib/supabase';
 import { formatCLP } from '../types/invoice';
 import type { CashCategory, CashTransaction, Purchase, Sale, CashFlowSummary } from '../types/cashflow';
+import { showConfirm, showSuccess, showError, showToast } from '../lib/alerts';
 
 type ViewMode = 'overview' | 'entries' | 'purchases' | 'sales' | 'new-entry' | 'new-purchase' | 'new-sale';
 type TransactionType = 'entry' | 'exit';
@@ -258,35 +259,41 @@ export default function CashFlow() {
   };
 
   const handleDeleteTransaction = async (id: string) => {
-    if (!confirm('Eliminar este movimiento?')) return;
+    const confirmed = await showConfirm('¿Eliminar este movimiento?', 'Esta acción no se puede deshacer.', 'Eliminar', 'Cancelar');
+    if (!confirmed) return;
     try {
       const { error } = await supabase.from('cash_transactions').delete().eq('id', id);
       if (error) throw error;
+      showToast('success', 'Movimiento eliminado');
       loadData();
     } catch (err) {
-      console.error('Error deleting transaction:', err);
+      showError('Error', 'No se pudo eliminar el movimiento');
     }
   };
 
   const handleDeletePurchase = async (id: string) => {
-    if (!confirm('Eliminar esta compra?')) return;
+    const confirmed = await showConfirm('¿Eliminar esta compra?', 'Esta acción no se puede deshacer.', 'Eliminar', 'Cancelar');
+    if (!confirmed) return;
     try {
       const { error } = await supabase.from('purchases').delete().eq('id', id);
       if (error) throw error;
+      showToast('success', 'Compra eliminada');
       loadData();
     } catch (err) {
-      console.error('Error deleting purchase:', err);
+      showError('Error', 'No se pudo eliminar la compra');
     }
   };
 
   const handleDeleteSale = async (id: string) => {
-    if (!confirm('Eliminar esta venta?')) return;
+    const confirmed = await showConfirm('¿Eliminar esta venta?', 'Esta acción no se puede deshacer.', 'Eliminar', 'Cancelar');
+    if (!confirmed) return;
     try {
       const { error } = await supabase.from('sales').delete().eq('id', id);
       if (error) throw error;
+      showToast('success', 'Venta eliminada');
       loadData();
     } catch (err) {
-      console.error('Error deleting sale:', err);
+      showError('Error', 'No se pudo eliminar la venta');
     }
   };
 

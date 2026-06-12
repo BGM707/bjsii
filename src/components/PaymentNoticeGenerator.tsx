@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, CreditCard as Edit2, Trash2, ArrowRight, AlertCircle } from 'lucide-react';
 import { supabase, Project, CobrosNote, PaymentNotice as PaymentNoticeType, getAuthUserId } from '../lib/supabase';
+import { showConfirm, showSuccess, showError, showWarning, showToast } from '../lib/alerts';
 
 interface PaymentNoticeForm {
   id?: string;
@@ -70,7 +71,7 @@ export default function PaymentNoticeGenerator() {
 
   const handleSaveNotice = async () => {
     if (!formData.cliente || !formData.rut || !formData.neto) {
-      alert('Por favor completa los campos requeridos');
+      showWarning('Campos requeridos', 'Por favor completa cliente, RUT y monto neto');
       return;
     }
 
@@ -101,12 +102,14 @@ export default function PaymentNoticeGenerator() {
           .update(saveData)
           .eq('id', formData.id);
         if (error) throw error;
+        showToast('success', 'Aviso actualizado');
       } else {
         const userId = await getAuthUserId();
         const { error } = await supabase
           .from('payment_notices')
           .insert([{ ...saveData, user_id: userId }]);
         if (error) throw error;
+        showToast('success', 'Aviso creado');
       }
 
       setShowForm(false);
@@ -127,15 +130,15 @@ export default function PaymentNoticeGenerator() {
       });
       loadNotices();
     } catch (err) {
-      console.error('Error saving notice:', err);
-      alert('Error al guardar el aviso de cobro');
+      showError('Error', 'No se pudo guardar el aviso de cobro');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteNotice = async (id: string) => {
-    if (!confirm('¿Eliminar este aviso de cobro?')) return;
+    const confirmed = await showConfirm('¿Eliminar este aviso de cobro?', 'Esta acción no se puede deshacer.', 'Eliminar', 'Cancelar');
+    if (!confirmed) return;
 
     setLoading(true);
     try {
@@ -144,10 +147,10 @@ export default function PaymentNoticeGenerator() {
         .delete()
         .eq('id', id);
       if (error) throw error;
+      showToast('success', 'Aviso eliminado');
       loadNotices();
     } catch (err) {
-      console.error('Error deleting notice:', err);
-      alert('Error al eliminar el aviso');
+      showError('Error', 'No se pudo eliminar el aviso');
     } finally {
       setLoading(false);
     }

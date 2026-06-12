@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, CreditCard as Edit2, Loader, AlertCircle, FolderOpen } from 'lucide-react';
 import { supabase, Project, getAuthUserId } from '../lib/supabase';
+import { showConfirm, showSuccess, showError, showToast } from '../lib/alerts';
 
 export default function ProjectsCarousel() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -49,9 +50,16 @@ export default function ProjectsCarousel() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Eliminar este proyecto?')) return;
-    try { const { error } = await supabase.from('projects').delete().eq('id', id); if (error) throw error; loadProjects(); }
-    catch (err) { console.error('Error deleting project:', err); }
+    const confirmed = await showConfirm('¿Eliminar este proyecto?', 'Esta acción no se puede deshacer. El proyecto será eliminado permanentemente.', 'Eliminar', 'Cancelar');
+    if (!confirmed) return;
+    try {
+      const { error } = await supabase.from('projects').delete().eq('id', id);
+      if (error) throw error;
+      showToast('success', 'Proyecto eliminado');
+      loadProjects();
+    } catch (err) {
+      showError('Error', 'No se pudo eliminar el proyecto');
+    }
   };
 
   const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
