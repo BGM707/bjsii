@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Download, Upload, Database, FileJson, FileSpreadsheet, AlertCircle, CheckCircle,
   Loader2, Info, ChevronDown, ChevronUp, Filter, Eye, Trash2, RefreshCw,
-  Calendar, Table2, HardDrive, Clock, X, Check, AlertTriangle
+  Calendar, Table2, HardDrive, Clock, X, Check, AlertTriangle, History,
+  Copy, Archive, RotateCcw, Settings, Zap
 } from 'lucide-react';
 import { supabase, getCurrentUserId } from '../lib/supabase';
 
@@ -26,6 +27,14 @@ interface PreviewData {
   count: number;
   canImport: boolean;
   validationErrors: string[];
+}
+
+interface BackupRecord {
+  date: string;
+  tables: string[];
+  recordCount: number;
+  fileName: string;
+  type: 'json' | 'csv' | 'sqlite';
 }
 
 const ALL_TABLES: { name: string; label: string; icon: string }[] = [
@@ -76,13 +85,40 @@ export default function DatabaseImportExport() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [importMode, setImportMode] = useState<'insert' | 'upsert'>('insert');
   const [lastExportDate, setLastExportDate] = useState<string | null>(null);
+  const [backupHistory, setBackupHistory] = useState<BackupRecord[]>([]);
+  const [showCleanupPanel, setShowCleanupPanel] = useState(false);
+  const [cleanupTables, setCleanupTables] = useState<string[]>([]);
+  const [showBackupHistory, setShowBackupHistory] = useState(false);
 
   // Load stats on mount
   useEffect(() => {
     loadStats();
     const lastExport = localStorage.getItem('lastDbExport');
     if (lastExport) setLastExportDate(lastExport);
+    loadBackupHistory();
   }, []);
+
+  const loadBackupHistory = () => {
+    try {
+      const history = localStorage.getItem('backupHistory');
+      if (history) {
+        setBackupHistory(JSON.parse(history));
+      }
+    } catch { /* ignore */ }
+  };
+
+  const saveBackupRecord = (tables: string[], recordCount: number, fileName: string, type: 'json' | 'csv' | 'sqlite') => {
+    const record: BackupRecord = {
+      date: new Date().toISOString(),
+      tables,
+      recordCount,
+      fileName,
+      type
+    };
+    const history = [record, ...backupHistory].slice(0, 10); // Keep last 10
+    localStorage.setItem('backupHistory', JSON.stringify(history));
+    setBackupHistory(history);
+  };
 
   const loadStats = async () => {
     const results: TableStats[] = [];
@@ -174,14 +210,16 @@ export default function DatabaseImportExport() {
 
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
+      const fileName = `bj_servicios_backup_${new Date().toISOString().split('T')[0]}.json`;
       const a = document.createElement('a');
       a.href = url;
-      a.download = `bj_servicios_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
 
       localStorage.setItem('lastDbExport', new Date().toISOString());
       setLastExportDate(new Date().toISOString());
+      saveBackupRecord(selectedTables, exportedCount, fileName, 'json');
       setMessage({ type: 'success', text: `Exportacion completada: ${exportedCount} registros de ${selectedTables.length} tablas` });
     } catch (err: any) {
       setMessage({ type: 'error', text: `Error al exportar: ${err.message}` });
@@ -244,14 +282,16 @@ export default function DatabaseImportExport() {
 
       const blob = new Blob([sections.join('\n')], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
+      const fileName = `bj_servicios_backup_${new Date().toISOString().split('T')[0]}.csv`;
       const a = document.createElement('a');
       a.href = url;
-      a.download = `bj_servicios_backup_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
 
       localStorage.setItem('lastDbExport', new Date().toISOString());
       setLastExportDate(new Date().toISOString());
+      saveBackupRecord(selectedTables, exportedCount, fileName, 'csv');
       setMessage({ type: 'success', text: `Exportacion CSV completada: ${exportedCount} registros` });
     } catch (err: any) {
       setMessage({ type: 'error', text: `Error al exportar CSV: ${err.message}` });
@@ -1424,6 +1464,158 @@ export default function DatabaseImportExport() {
           </div>
         </div>
       )}
+
+      {/* Backup History */}
+      {backupHistory.length > 0 && (
+        <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg border border-neutral-200 dark:border-neutral-700">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <History className="w-5 h-5 text-neutral-500" />
+              <h3 className="text-lg font-semibold">Historial de Respaldos</h3>
+            </div>
+            <button
+              onClick={() => {
+                localStorage.removeItem('backupHistory');
+                setBackupHistory([]);
+              }}
+              className="text-xs text-neutral-500 hover:text-red-500"
+            >
+              Limpiar historial
+            </button>
+          </div>
+          <div className="space-y-2">
+            {backupHistory.map((backup, i) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-900 rounded-lg text-sm">
+                <div className="flex items-center gap-3">
+                  {backup.type === 'json' ? <FileJson className="w-4 h-4 text-blue-500" />
+                   : backup.type === 'csv' ? <FileSpreadsheet className="w-4 h-4 text-green-500" />
+                   : <Database className="w-4 h-4 text-yellow-500" />}
+                  <div>
+                    <span className="font-medium">{backup.fileName}</span>
+                    <div className="text-xs text-neutral-500">
+                      {new Date(backup.date).toLocaleString()} - {backup.recordCount} registros
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-neutral-500">
+                  {backup.tables.length} tablas
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Database Cleanup Section */}
+      <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg border border-red-200 dark:border-red-500/30">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Trash2 className="w-5 h-5 text-red-500" />
+            <h3 className="text-lg font-semibold">Limpieza de Base de Datos</h3>
+          </div>
+          <button
+            onClick={() => setShowCleanupPanel(!showCleanupPanel)}
+            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg transition ${
+              showCleanupPanel
+                ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300'
+                : 'bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400'
+            }`}
+          >
+            {showCleanupPanel ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {showCleanupPanel ? 'Ocultar' : 'Mostrar opciones'}
+          </button>
+        </div>
+
+        <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg mb-4">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-red-700 dark:text-red-300">
+              <p className="font-semibold mb-1">Advertencia</p>
+              <p>La eliminacion de datos es permanente. Asegurese de exportar un respaldo antes de realizar cualquier limpieza.</p>
+            </div>
+          </div>
+        </div>
+
+        {showCleanupPanel && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+              {stats.map(stat => (
+                <label
+                  key={stat.name}
+                  className={`flex items-center gap-2 p-2 rounded cursor-pointer transition text-sm ${
+                    cleanupTables.includes(stat.name)
+                      ? 'bg-red-100 dark:bg-red-500/20 border border-red-300 dark:border-red-500 text-red-700 dark:text-red-300'
+                      : 'bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700'
+                  } ${stat.count === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={cleanupTables.includes(stat.name)}
+                    onChange={() => {
+                      if (stat.count > 0) {
+                        setCleanupTables(prev =>
+                          prev.includes(stat.name)
+                            ? prev.filter(t => t !== stat.name)
+                            : [...prev, stat.name]
+                        );
+                      }
+                    }}
+                    disabled={stat.count === 0}
+                    className="sr-only"
+                  />
+                  <span>{stat.icon}</span>
+                  <span className="truncate">{stat.label}</span>
+                  <span className="ml-auto text-xs">({stat.count})</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => setCleanupTables(stats.filter(s => s.count > 0).map(s => s.name))}
+                className="px-3 py-1.5 text-sm bg-neutral-100 dark:bg-neutral-700 rounded hover:bg-neutral-200 dark:hover:bg-neutral-600"
+              >
+                Seleccionar todas
+              </button>
+              <button
+                onClick={() => setCleanupTables([])}
+                className="px-3 py-1.5 text-sm bg-neutral-100 dark:bg-neutral-700 rounded hover:bg-neutral-200 dark:hover:bg-neutral-600"
+              >
+                Deseleccionar todas
+              </button>
+              <button
+                onClick={async () => {
+                  if (cleanupTables.length === 0) return;
+                  const tableNames = cleanupTables.map(t => ALL_TABLES.find(a => a.name === t)?.label || t).join(', ');
+                  if (!confirm(`Eliminar TODOS los registros de: ${tableNames}?\n\nEsta accion no se puede deshacer.`)) return;
+
+                  setMessage(null);
+                  try {
+                    let deletedCount = 0;
+                    for (const table of cleanupTables) {
+                      const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                      if (!error) {
+                        const stat = stats.find(s => s.name === table);
+                        deletedCount += stat?.count || 0;
+                      }
+                    }
+                    setMessage({ type: 'success', text: `Eliminados ${deletedCount} registros de ${cleanupTables.length} tablas` });
+                    setCleanupTables([]);
+                    loadStats();
+                  } catch (err: any) {
+                    setMessage({ type: 'error', text: `Error: ${err.message}` });
+                  }
+                }}
+                disabled={cleanupTables.length === 0}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Trash2 className="w-4 h-4" />
+                Eliminar {cleanupTables.length > 0 ? `${cleanupTables.length} tablas` : 'seleccionados'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
